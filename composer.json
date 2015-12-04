@@ -1,0 +1,18 @@
+{
+  "name" : "org_heigl/talk_to_composer",
+  "type" : "wordpress-plugin",
+  "description": "Register your currently active plugins with composer",
+  "keywords": ["wordpress","wp", "plugin", "composer", "theme"],
+  "homepage": "http://github.com/heiglandreas/wp_talkToComposer",
+  "license": "MIT",
+  "authors": [{
+    "name": "Andreas Heigl",
+    "email": "andreas@heigl.org",
+    "homepage": "http://andreas.heigl.org",
+    "role": "Developer"
+  }],
+  "require" : {
+    "php" : ">=5.5",
+    "composer/installers": "~1.0"
+  }
+}
