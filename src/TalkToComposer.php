@@ -35,12 +35,12 @@ class TalkToComposer
 
     public function __construct()
     {
-        // Check for a composer installation and if none is available, get one
+        $this->checkForComposer();
     }
 
     public function getComposerBinary()
     {
-        return 'composer';
+        return $this->composer;
     }
 
 
@@ -55,11 +55,55 @@ class TalkToComposer
         }
 
         // Add the wpackagist repository
+        if (! file_exists(ABSPATH . '/composer.json')) {
+            file_put_contents(ABSPATH . '/composer.json', '{}');
+        }
+        $composerJson = json_decode(file_get_contents(ABSPATH . '/composer.json'), JSON_OBJECT_AS_ARRAY);
+        if (! isset($composerJson['repositories'])) {
+            $composerJson['repositories'] = array();
+        }
+
+        $repository = array(
+            'type' => 'composer',
+            'url'  => 'http://wpackagist.org',
+        );
+
+        if (! in_array($repository, $composerJson['repositories'])) {
+            exec(sprintf(
+                'cd %2$s && %1$s config repositories.wpackagist composer http://wpackagist.org',
+                $this->getComposerBinary(),
+                ABSPATH
+            ), $output, $returnVal);
+        }
+
         exec(sprintf(
-            'cd %2$s && %1$s config repositories.wpackagist composer http://wpackagist.org',
+            'cd "%2$s" && %1$s require org_heigl/talk_to_composer',
             $this->getComposerBinary(),
             ABSPATH
-        ), $output, $returnVal);
+        ));
+
+        // Add All currently active plugins and themes
+        $command = sprintf(
+            'cd "%1$s" && ./vendor/bin/wp plugin list --status=active --field=name',
+            ABSPATH
+        );
+        exec($command, $output, $returnVal);
+
+        error_log($command);
+        if ($returnVal != 0) {
+            error_log(print_r($output, true));
+            return;
+        }
+
+        foreach ($output as $plugin) {
+            exec(sprintf(
+                'cd "%3$s" && %1$s require --no-update --no-progress wpackagist-plugin/%2$s',
+                $this->getComposerBinary(),
+                escapeshellarg($plugin),
+                ABSPATH
+            ), $output, $returnVal);
+
+        }
     }
 
     /**
@@ -101,5 +145,48 @@ class TalkToComposer
     protected function getPluginName($pluginPath)
     {
         return dirname($pluginPath);
+    }
+
+    /**
+     * Check whether composer is available or not
+     *
+     * If composer is not available we try to fetch our own composer installation
+     *
+     * @return bool
+     */
+    protected function checkForComposer()
+    {
+        $composerPath = __DIR__ . '/../bin/composer';
+        exec('which composer', $output, $returnValue);
+        if ($returnValue == 0) {
+            $this->composer = $output[0];
+
+            return true;
+        }
+
+        if (is_executable($composerPath)) {
+            $this->composer = $composerPath;
+            return true;
+        }
+
+        if (! file_Exists(dirname($composerPath))) {
+            mkdir(dirname($composerPath));
+        }
+
+        $url = 'https://getcomposer.org/composer.phar';
+        $fp = fopen ($composerPath, 'w+');
+        $ch = curl_init(str_replace(" ","%20",$url));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+        curl_setopt($ch, CURLOPT_FILE, $fp);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_exec($ch);
+        curl_close($ch);
+        fclose($fp);
+
+        chmod($composerPath, 0755);
+
+        $this->composer = realpath($composerPath);
+
+        return true;
     }
 }
