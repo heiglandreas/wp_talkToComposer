@@ -39,3 +39,4 @@ $talkToComposer = new Org_Heigl\Wordpress\Plugins\TalkToComposer();
 add_action('activated_plugin', [$talkToComposer, 'activatePlugin'], 10, 2);
 add_action('activate_plugin', [$talkToComposer, 'activateSelf'], 10, 2);
 add_action('deactivated_plugin', [$talkToComposer, 'deactivatePlugin'], 10, 2);
+add_action('switch_theme', [$talkToComposer, 'switchTheme'], 10, 2);

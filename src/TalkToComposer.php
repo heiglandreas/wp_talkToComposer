@@ -89,9 +89,7 @@ class TalkToComposer
         );
         exec($command, $output, $returnVal);
 
-        error_log($command);
         if ($returnVal != 0) {
-            error_log(print_r($output, true));
             return;
         }
 
@@ -120,8 +118,6 @@ class TalkToComposer
             ABSPATH
         ), $output, $returnVar);
 
-        error_log(getcwd());
-        error_log(implode("\n", $output));
     }
 
     /**
@@ -138,13 +134,51 @@ class TalkToComposer
             ABSPATH
         ), $output, $returnVar);
 
-        error_log(getcwd());
-        error_log(implode("\n", $output));
     }
 
     protected function getPluginName($pluginPath)
     {
         return dirname($pluginPath);
+    }
+
+    /**
+     * @param string   $new_name  Name of the new theme.
+     * @param WP_Theme $new_theme WP_Theme instance of the new theme.
+     *
+     * @return void
+     */
+    public function switchTheme($themeName, $theme)
+    {
+        $currentTheme = basename($theme->get('ThemeURI'));
+        $parentTheme = basename($theme->get('Template'));
+
+        // Remove all current themes
+        exec(sprintf(
+            'cd %2$s && %1$s remove --no-update --no-progress `%1$s show -iN | grep wpackagist-theme`',
+            $this->getComposerBinary(),
+            ABSPATH
+            ), $output, $returnValue);
+
+        // add the current theme to composer.json
+        exec(sprintf(
+            'cd %3$s && %1$s require --no-update --no-progress wpackagist-theme/%2$s',
+            $this->getComposerBinary(),
+            escapeshellarg($currentTheme),
+            ABSPATH
+        ), $output, $returnVar);
+
+        if (! $parentTheme) {
+            return;
+        }
+
+        // Add a possible parent theme to composer.json
+        exec(sprintf(
+            'cd %3$s && %1$s require --no-update --no-progress wpackagist-theme/%2$s',
+            $this->getComposerBinary(),
+            escapeshellarg($parentTheme),
+            ABSPATH
+        ), $output, $returnVar);
+
     }
 
     /**
