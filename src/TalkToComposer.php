@@ -33,9 +33,12 @@ class TalkToComposer
 {
     protected $composer = '';
 
+    protected $absPath = '';
+
     public function __construct()
     {
         $this->checkForComposer();
+        $this->absPath = $this->getAbsPath();
     }
 
     public function getComposerBinary()
@@ -55,10 +58,10 @@ class TalkToComposer
         }
 
         // Add the wpackagist repository
-        if (! file_exists(ABSPATH . '/composer.json')) {
-            file_put_contents(ABSPATH . '/composer.json', '{}');
+        if (! file_exists($this->absPath . '/composer.json')) {
+            file_put_contents($this->absPath . '/composer.json', '{}');
         }
-        $composerJson = json_decode(file_get_contents(ABSPATH . '/composer.json'), JSON_OBJECT_AS_ARRAY);
+        $composerJson = json_decode(file_get_contents($this->absPath . '/composer.json'), JSON_OBJECT_AS_ARRAY);
         if (! isset($composerJson['repositories'])) {
             $composerJson['repositories'] = array();
         }
@@ -72,20 +75,20 @@ class TalkToComposer
             exec(sprintf(
                 'cd %2$s && %1$s config repositories.wpackagist composer http://wpackagist.org',
                 $this->getComposerBinary(),
-                ABSPATH
+                $this->absPath
             ), $output, $returnVal);
         }
 
         exec(sprintf(
             'cd "%2$s" && %1$s require org_heigl/talk_to_composer',
             $this->getComposerBinary(),
-            ABSPATH
+            $this->absPath
         ));
 
         // Add All currently active plugins and themes
         $command = sprintf(
             'cd "%1$s" && ./vendor/bin/wp plugin list --status=active --field=name',
-            ABSPATH
+            $this->absPath
         );
         exec($command, $output, $returnVal);
 
@@ -98,7 +101,7 @@ class TalkToComposer
                 'cd "%3$s" && %1$s require --no-update --no-progress wpackagist-plugin/%2$s',
                 $this->getComposerBinary(),
                 escapeshellarg($plugin),
-                ABSPATH
+                $this->absPath
             ), $output, $returnVal);
 
         }
@@ -112,10 +115,10 @@ class TalkToComposer
     {
         $plugin = $this->getPluginName($plugin);
         exec(sprintf(
-            'cd %3$s && %1$s require --no-update --no-progress wpackagist-plugin/%2$s',
+            'cd %3$s && %1$s require --no-update --no-progress %2$s',
             $this->getComposerBinary(),
             escapeshellarg($plugin),
-            ABSPATH
+            $this->absPath
         ), $output, $returnVar);
 
     }
@@ -128,17 +131,23 @@ class TalkToComposer
     {
         $plugin = $this->getPluginName($plugin);
         exec(sprintf(
-            'cd %3$s && %1$s remove --no-update --no-progress wpackagist-plugin/%2$s',
+            'cd %3$s && %1$s remove --no-update --no-progress %2$s',
             $this->getComposerBinary(),
             escapeshellarg($plugin),
-            ABSPATH
+            $this->absPath
         ), $output, $returnVar);
 
     }
 
     protected function getPluginName($pluginPath)
     {
-        return dirname($pluginPath);
+        if (! file_exists(dirname($pluginPath) . '/composer.json')) {
+            return 'wpackagist-plugin/' . dirname($pluginPath);
+        }
+
+        $info = json_decode(file_GEt_contents(dirname($pluginPath) . '/composer.json'), true);
+
+        return $info['name'];
     }
 
     /**
@@ -156,7 +165,7 @@ class TalkToComposer
         exec(sprintf(
             'cd %2$s && %1$s remove --no-update --no-progress `%1$s show -iN | grep wpackagist-theme`',
             $this->getComposerBinary(),
-            ABSPATH
+            $this->absPath
             ), $output, $returnValue);
 
         // add the current theme to composer.json
@@ -164,7 +173,7 @@ class TalkToComposer
             'cd %3$s && %1$s require --no-update --no-progress wpackagist-theme/%2$s',
             $this->getComposerBinary(),
             escapeshellarg($currentTheme),
-            ABSPATH
+            $this->absPath
         ), $output, $returnVar);
 
         if (! $parentTheme) {
@@ -176,7 +185,7 @@ class TalkToComposer
             'cd %3$s && %1$s require --no-update --no-progress wpackagist-theme/%2$s',
             $this->getComposerBinary(),
             escapeshellarg($parentTheme),
-            ABSPATH
+            $this->absPath
         ), $output, $returnVar);
 
     }
@@ -222,5 +231,16 @@ class TalkToComposer
         $this->composer = realpath($composerPath);
 
         return true;
+    }
+
+    protected function getAbsPath()
+    {
+        $absPath = ABSPATH;
+
+        if (file_exists(dirname($absPath) . '/wp-config.php')) {
+            $absPath = dirname($absPath) . '/';
+        }
+
+        return $absPath;
     }
 }
