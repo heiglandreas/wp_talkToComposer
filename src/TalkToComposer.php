@@ -168,6 +168,30 @@ class TalkToComposer
             $this->absPath
             ), $output, $returnValue);
 
+        $themeIterator = new \DirectoryIterator(WP_CONTENT_DIR . '/themes');
+        foreach ($themeIterator as $item) {
+            if ($item->isDot()) {
+                continue;
+            }
+            if (! file_Exists($item->getPathname() . '/composer.json')) {
+                continue;
+            }
+
+            $content = json_decode(file_get_contents($item->getPathname() . '/composer.json'),
+                true);
+
+            if ($content['type'] !== 'wordpress-theme') {
+                continue;
+            }
+
+            exec(sprintf(
+                'cd %2$s && %1$s remove --no-update --no-progress %3$s',
+                $this->getComposerBinary(),
+                $this->absPath,
+                escapeshellarg($content['name'])
+            ), $output, $returnValue);
+        }
+        
         // add the current theme to composer.json
         exec(sprintf(
             'cd %3$s && %1$s require --no-update --no-progress wpackagist-theme/%2$s',
