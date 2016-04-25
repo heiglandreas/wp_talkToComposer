@@ -53,7 +53,7 @@ class TalkToComposer
      */
     public function activateSelf($plugin)
     {
-        if (strpos(strtolower($plugin), 'talktocomposer/') !== 0) {
+        if (strpos(strtolower($plugin), 'talk_to_composer/') !== 0) {
             return;
         }
 
@@ -72,12 +72,12 @@ class TalkToComposer
         );
 
         if (! in_array($repository, $composerJson['repositories'])) {
-            exec(sprintf(
+            $this->exec(sprintf(
                 'config repositories.wpackagist composer http://wpackagist.org'
             ), $output, $returnVal);
         }
 
-        exec(sprintf(
+        $this->exec(sprintf(
             'require org_heigl/talk_to_composer'
         ));
 
@@ -92,7 +92,7 @@ class TalkToComposer
         }
 
         foreach ($output as $plgn) {
-            exec(sprintf(
+            $this->exec(sprintf(
                 'require --no-update --no-progress wpackagist-plugin/%1$s',
                 escapeshellarg($plgn)
             ));
@@ -111,10 +111,7 @@ class TalkToComposer
             'require --no-update --no-progress %1$s',
             escapeshellarg($plugin)
         );
-        exec($cmd, $output, $returnVar);
-        var_Dump($cmd);
-        var_Dump($output);
-
+        $this->exec($cmd);
     }
 
     /**
@@ -174,14 +171,14 @@ class TalkToComposer
                 continue;
             }
 
-            exec(sprintf(
+            $this->exec(sprintf(
                 'remove --no-update --no-progress %1$s',
                 escapeshellarg($content['name'])
             ));
         }
 
         // add the current theme to composer.json
-        exec(sprintf(
+        $this->exec(sprintf(
             'require --no-update --no-progress wpackagist-theme/%1$s',
             escapeshellarg($currentTheme)
         ));
