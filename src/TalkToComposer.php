@@ -73,22 +73,17 @@ class TalkToComposer
 
         if (! in_array($repository, $composerJson['repositories'])) {
             exec(sprintf(
-                'COMPOSER_HOME="%2$s" %1$s config repositories.wpackagist composer http://wpackagist.org',
-                $this->getComposerBinary(),
-                $this->absPath
+                'config repositories.wpackagist composer http://wpackagist.org'
             ), $output, $returnVal);
         }
 
         exec(sprintf(
-            'COMPOSER_HOME="%2$s" %1$s require org_heigl/talk_to_composer',
-            $this->getComposerBinary(),
-            $this->absPath
+            'require org_heigl/talk_to_composer'
         ));
 
         // Add All currently active plugins and themes
         $command = sprintf(
-            'COMPOSER_HOME="%1$s" ./vendor/bin/wp plugin list --status=active --field=name',
-            $this->absPath
+            './vendor/bin/wp plugin list --status=active --field=name'
         );
         exec($command, $output, $returnVal);
 
@@ -96,13 +91,11 @@ class TalkToComposer
             return;
         }
 
-        foreach ($output as $plugin) {
+        foreach ($output as $plgn) {
             exec(sprintf(
-                'COMPOSER_HOME="%3$s" %1$s require --no-update --no-progress wpackagist-plugin/%2$s',
-                $this->getComposerBinary(),
-                escapeshellarg($plugin),
-                $this->absPath
-            ), $output, $returnVal);
+                'require --no-update --no-progress wpackagist-plugin/%1$s',
+                escapeshellarg($plgn)
+            ));
 
         }
     }
@@ -115,10 +108,8 @@ class TalkToComposer
     {
         $plugin = $this->getPluginName($plugin);
         $cmd = sprintf(
-            'COMPOSER_HOME="%3$s" %1$s require --no-update --no-progress %2$s',
-            $this->getComposerBinary(),
-            escapeshellarg($plugin),
-            $this->absPath
+            'require --no-update --no-progress %1$s',
+            escapeshellarg($plugin)
         );
         exec($cmd, $output, $returnVar);
         var_Dump($cmd);
@@ -133,12 +124,9 @@ class TalkToComposer
     public function deactivatePlugin($plugin, $networkWide)
     {
         $plugin = $this->getPluginName($plugin);
-        exec(sprintf(
-            'COMPOSER_HOME="%3$s" %1$s remove --no-update --no-progress %2$s',
-            $this->getComposerBinary(),
-            escapeshellarg($plugin),
-            $this->absPath
-        ), $output, $returnVar);
+        $this->exec(sprintf('remove --no-update --no-progress %1$s',
+            escapeshellarg($plugin)
+        ));
 
     }
 
@@ -165,11 +153,10 @@ class TalkToComposer
         $parentTheme = basename($theme->get('Template'));
 
         // Remove all current themes
-        exec(sprintf(
-            'COMPOSER_HOME="%2$s" %1$s remove --no-update --no-progress `%1$s show -iN | grep wpackagist-theme`',
-            $this->getComposerBinary(),
-            $this->absPath
-            ), $output, $returnValue);
+        $this->exec(sprintf(
+            'remove --no-update --no-progress `%1$s show -iN | grep wpackagist-theme`',
+            $this->getComposerBinary()
+        ));
 
         $themeIterator = new \DirectoryIterator(WP_CONTENT_DIR . '/themes');
         foreach ($themeIterator as $item) {
@@ -188,32 +175,26 @@ class TalkToComposer
             }
 
             exec(sprintf(
-                'cd %2$s && %1$s remove --no-update --no-progress %3$s',
-                $this->getComposerBinary(),
-                $this->absPath,
+                'remove --no-update --no-progress %1$s',
                 escapeshellarg($content['name'])
-            ), $output, $returnValue);
+            ));
         }
 
         // add the current theme to composer.json
         exec(sprintf(
-            'COMPOSER_HOME="%3$s" %1$s require --no-update --no-progress wpackagist-theme/%2$s',
-            $this->getComposerBinary(),
-            escapeshellarg($currentTheme),
-            $this->absPath
-        ), $output, $returnVar);
+            'require --no-update --no-progress wpackagist-theme/%1$s',
+            escapeshellarg($currentTheme)
+        ));
 
         if (! $parentTheme) {
             return;
         }
 
         // Add a possible parent theme to composer.json
-        exec(sprintf(
-            'COMPOSER_HOME="%3$s" %1$s require --no-update --no-progress wpackagist-theme/%2$s',
-            $this->getComposerBinary(),
-            escapeshellarg($parentTheme),
-            $this->absPath
-        ), $output, $returnVar);
+        $this->exec(sprintf(
+            'require --no-update --no-progress wpackagist-theme/%1$s',
+            escapeshellarg($parentTheme)
+        ));
 
     }
 
@@ -269,5 +250,18 @@ class TalkToComposer
         }
 
         return $absPath;
+    }
+
+    protected function exec($command)
+    {
+        $cmd = sprintf(
+            'cd %1$s && COMPOSER_HOME=%2$s %3$s %4$s',
+            $this->absPath,
+            escapeshellarg('~/.composer'),
+            $this->getComposerBinary(),
+            $command
+        );
+
+        exec($cmd);
     }
 }
