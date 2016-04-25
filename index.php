@@ -29,7 +29,7 @@
  * Plugin Name: Talk to Composer
  * Plugin URI: https://github.com/heiglandreas/wp_talkToComposer
  * Description: Register your currently active plugins with composer
- * Version: 1.0.0
+ * Version: 1.1.1
  * Author: Andreas Heigl <a.heigl@wdv.de>
  * Author URI: http://andreas.heigl.org
  */
