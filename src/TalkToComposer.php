@@ -73,21 +73,21 @@ class TalkToComposer
 
         if (! in_array($repository, $composerJson['repositories'])) {
             exec(sprintf(
-                'cd %2$s && %1$s config repositories.wpackagist composer http://wpackagist.org',
+                'COMPOSER_HOME="%2$s" %1$s config repositories.wpackagist composer http://wpackagist.org',
                 $this->getComposerBinary(),
                 $this->absPath
             ), $output, $returnVal);
         }
 
         exec(sprintf(
-            'cd "%2$s" && %1$s require org_heigl/talk_to_composer',
+            'COMPOSER_HOME="%2$s" %1$s require org_heigl/talk_to_composer',
             $this->getComposerBinary(),
             $this->absPath
         ));
 
         // Add All currently active plugins and themes
         $command = sprintf(
-            'cd "%1$s" && ./vendor/bin/wp plugin list --status=active --field=name',
+            'COMPOSER_HOME="%1$s" ./vendor/bin/wp plugin list --status=active --field=name',
             $this->absPath
         );
         exec($command, $output, $returnVal);
@@ -98,7 +98,7 @@ class TalkToComposer
 
         foreach ($output as $plugin) {
             exec(sprintf(
-                'cd "%3$s" && %1$s require --no-update --no-progress wpackagist-plugin/%2$s',
+                'COMPOSER_HOME="%3$s" %1$s require --no-update --no-progress wpackagist-plugin/%2$s',
                 $this->getComposerBinary(),
                 escapeshellarg($plugin),
                 $this->absPath
@@ -114,12 +114,15 @@ class TalkToComposer
     public function activatePlugin($plugin, $networkWide)
     {
         $plugin = $this->getPluginName($plugin);
-        exec(sprintf(
-            'cd %3$s && %1$s require --no-update --no-progress %2$s',
+        $cmd = sprintf(
+            'COMPOSER_HOME="%3$s" %1$s require --no-update --no-progress %2$s',
             $this->getComposerBinary(),
             escapeshellarg($plugin),
             $this->absPath
-        ), $output, $returnVar);
+        );
+        exec($cmd, $output, $returnVar);
+        var_Dump($cmd);
+        var_Dump($output);
 
     }
 
@@ -131,7 +134,7 @@ class TalkToComposer
     {
         $plugin = $this->getPluginName($plugin);
         exec(sprintf(
-            'cd %3$s && %1$s remove --no-update --no-progress %2$s',
+            'COMPOSER_HOME="%3$s" %1$s remove --no-update --no-progress %2$s',
             $this->getComposerBinary(),
             escapeshellarg($plugin),
             $this->absPath
@@ -163,7 +166,7 @@ class TalkToComposer
 
         // Remove all current themes
         exec(sprintf(
-            'cd %2$s && %1$s remove --no-update --no-progress `%1$s show -iN | grep wpackagist-theme`',
+            'COMPOSER_HOME="%2$s" %1$s remove --no-update --no-progress `%1$s show -iN | grep wpackagist-theme`',
             $this->getComposerBinary(),
             $this->absPath
             ), $output, $returnValue);
@@ -191,10 +194,10 @@ class TalkToComposer
                 escapeshellarg($content['name'])
             ), $output, $returnValue);
         }
-        
+
         // add the current theme to composer.json
         exec(sprintf(
-            'cd %3$s && %1$s require --no-update --no-progress wpackagist-theme/%2$s',
+            'COMPOSER_HOME="%3$s" %1$s require --no-update --no-progress wpackagist-theme/%2$s',
             $this->getComposerBinary(),
             escapeshellarg($currentTheme),
             $this->absPath
@@ -206,7 +209,7 @@ class TalkToComposer
 
         // Add a possible parent theme to composer.json
         exec(sprintf(
-            'cd %3$s && %1$s require --no-update --no-progress wpackagist-theme/%2$s',
+            'COMPOSER_HOME="%3$s" %1$s require --no-update --no-progress wpackagist-theme/%2$s',
             $this->getComposerBinary(),
             escapeshellarg($parentTheme),
             $this->absPath
