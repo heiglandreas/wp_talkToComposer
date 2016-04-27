@@ -18,6 +18,7 @@
   },
   "require-dev": {
     "pear/versioncontrol_svn": "^0.5.2",
-    "pear/pear": "dev-master"
+    "pear/pear": "dev-master",
+    "pear/versioncontrol_git": "dev-master"
   }
 }
