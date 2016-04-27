@@ -53,7 +53,7 @@ class TalkToComposer
      */
     public function activateSelf($plugin)
     {
-        if (strpos(strtolower($plugin), 'talk_to_composer/') !== 0) {
+        if (strpos(strtolower($plugin), 'talk-to-composer/') !== 0) {
             return;
         }
 
