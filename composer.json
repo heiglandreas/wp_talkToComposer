@@ -14,7 +14,7 @@
   "require" : {
     "php" : ">=5.5",
     "composer/installers": "~1.0",
-    "wp-cli/wp-cli": "^0.21.1"
+    "wp-cli/wp-cli": "~0.24"
   },
   "require-dev": {
     "pear/versioncontrol_svn": "^0.5.2",
