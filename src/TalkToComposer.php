@@ -252,7 +252,7 @@ class TalkToComposer
     protected function exec($command)
     {
         $cmd = sprintf(
-            'cd %1$s && COMPOSER_HOME=%2$s %3$s %4$s',
+            'sh -c "cd %1$s && COMPOSER_HOME=%2$s php %3$s %4$s"',
             $this->absPath,
             escapeshellarg('~/.composer'),
             $this->getComposerBinary(),
